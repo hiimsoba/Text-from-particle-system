@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0>
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/addons/p5.dom.min.js"></script>
+  <script>
+    let default_str = "sample text thing";
+    let default_col;
+
+    // particle system
+    let psystem;
+
+    // returns x of pixel at index i in the pixel array
+    function getX(i) {
+      i = floor(i / 4);
+      return i % width;
+    }
+
+    // returns y of pixel at index i in the pixel array
+    function getY(i) {
+      i = floor(i / 4);
+      return floor(i / width);
+    }
+
+    // returns the position of the pixel at index i as a p5.vector
+    function getPos(i) {
+      return createVector(getX(i), getY(i));
+    }
+
+    // initialize the system with a given string
+    function init(str) {
+      psystem = new ParticleSystem();
+      // reset the background
+      background(0);
+      // text settings
+      textAlign(CENTER, CENTER);
+      textSize(48);
+      fill(255);
+
+      // print the text
+      text(str, width / 2, height / 2);
+      default_col = color(0);
+
+      loadPixels();
+      for (let i = 0; i < pixels.length; i += 4) {
+        let cur_pos = getPos(pixels.length, i);
+        let cur_col = get(cur_pos.x, cur_pos.y);
+        // add each pixel that doesn't have the default color in the particle system
+        if (default_col.levels.toString() !== cur_col.toString()) {
+          psystem.addParticle(cur_pos, cur_col);
+        }
+      }
+      updatePixels();
+    }
+
+    function setup() {
+      createCanvas(800, 400);
+      init(default_str);
+    }
+
+    function draw() {
+      background(0);
+      psystem.update();
+      psystem.render();
+    }
+
+    class Particle {
+      constructor(pos, col) {
+        // parameters and stuff
+        this.xrange = 50;
+        this.yrange = 50;
+        this.drag = 0.0015;
+        this.threshold = 0.5;
+        this.acc_mult = random(1000, 10000);
+        this.init_pos = pos;
+        this.curr_pos = createVector(random(-this.xrange * width, this.xrange * width), random(-this.yrange * height, this.yrange * height));
+        this.delta_pos = createVector(this.curr_pos.x - this.init_pos.x, this.curr_pos.y - this.init_pos.y);
+        this.col = col;
+        this.vel = p5.Vector.random2D();
+        this.acc = createVector(0, 0);
+      }
+
+      update() {
+        // if we reached the initial position, return
+        if (Math.abs(this.delta_pos.x) <= this.threshold && Math.abs(this.delta_pos.y) <= this.threshold) {
+          return;
+        }
+        // otherwise update
+        this.acc = this.delta_pos;
+        this.acc.add(p5.Vector.random2D().mult(this.acc_mult));
+        this.acc.mult(-this.drag);
+        this.vel.add(this.acc);
+        this.vel.mult(0.85);
+        this.curr_pos.add(this.vel);
+        this.delta_pos = createVector(this.curr_pos.x - this.init_pos.x, this.curr_pos.y - this.init_pos.y);
+        this.acc_mult *= 0.9925;
+      }
+
+      show() {
+        stroke(this.col);
+        point(this.curr_pos.x, this.curr_pos.y);
+      }
+    }
+
+    class ParticleSystem {
+      constructor() {
+        this.particles = [];
+      }
+
+      addParticle(pos, col) {
+        this.particles.push(new Particle(pos, col));
+      }
+
+      update() {
+        for (let p of this.particles) {
+          p.update();
+        }
+      }
+
+      render() {
+        for (let p of this.particles) {
+          p.show();
+        }
+      }
+    }
+  </script>
+</head>
+<body>
+</body>
+</html>
