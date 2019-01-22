@@ -50,7 +50,7 @@
 
       loadPixels();
       for (let i = 0; i < pixels.length; i += 4) {
-        let cur_pos = getPos(pixels.length, i);
+        let cur_pos = getPos(i);
         let cur_col = get(cur_pos.x, cur_pos.y);
         // add each pixel that doesn't have the default color in the particle system
         if (default_col.levels.toString() !== cur_col.toString()) {
